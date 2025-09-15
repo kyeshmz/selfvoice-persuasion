@@ -3,7 +3,7 @@ CREATE TABLE "Participant" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "externalId" TEXT NOT NULL,
     "consentGiven" BOOLEAN NOT NULL DEFAULT false,
-    "answers" JSONB,
+    "demographics" JSONB,
     "audioUrl" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
