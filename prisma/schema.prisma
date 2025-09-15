@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./db.sqlite3"
+}
+
+model Participant {
+  id           String   @id @default(cuid())
+  externalId   String   @unique
+  consentGiven Boolean  @default(false)
+  answers      Json?
+  audioUrl     String?
+  createdAt    DateTime @default(now())
+}
