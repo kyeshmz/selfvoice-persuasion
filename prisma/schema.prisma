@@ -12,5 +12,6 @@ model Participant {
   externalId   String   @unique
   consentGiven Boolean  @default(false)
   demographics Json?
+  audioFile    String?
   createdAt    DateTime @default(now())
 }

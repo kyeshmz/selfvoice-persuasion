@@ -17,7 +17,7 @@ export default function ConsentPage({ params }: { params: Promise<{ id: string }
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ consent: true }),
         });
-        router.push(`/demographics/${id}`);
+        router.push(`/${id}/demographics`);
     }
     return (
     <div className="p-6">

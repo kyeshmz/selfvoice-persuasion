@@ -17,7 +17,7 @@ export async function PATCH( request: NextRequest,  { params }: {params: Promise
     
     const updated = await prisma.participant.update({
         where: { id },
-        data: { audioUrl: `${id}.webm` },
+        data: { audioFile: `${id}.webm` },
     });
     return NextResponse.json(updated);
 }
