@@ -16,7 +16,7 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
     useEffect(() => {
         fetch(`/api/${id}`)
             .then(res => res.json())
-            .then(data => setAnswers(data.participant.answers || {}));
+            .then(data => { setAnswers(data.participant.demographics || {});} );
     }, [id]);
 
     const saveAnswers = async () => {
