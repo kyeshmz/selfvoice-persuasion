@@ -15,4 +15,15 @@ model Participant {
   audioFile        String?
   audioCheckPassed Boolean?
   createdAt        DateTime @default(now())
+  experiments      Experiment[]
+}
+
+model Experiment {
+  id               String     @id @default(cuid())
+  studyId          String
+  sessionId        String
+  participantId    String
+  completedAt      DateTime?
+  createdAt        DateTime @default(now())
+  participant Participant @relation(fields: [participantId], references: [id])
 }

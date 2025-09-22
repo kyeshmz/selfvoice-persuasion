@@ -80,7 +80,7 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     onClick={handleNext}
                 >
-                    Continue to Recording
+                    Continue
                 </button>
             </div>
         </div>

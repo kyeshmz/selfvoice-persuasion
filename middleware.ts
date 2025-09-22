@@ -2,37 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+    const { pathname } = request.nextUrl;
   
-  // Extract participant ID from the path
-  const pathParts = pathname.split('/');
-  const participantId = pathParts[1];
+    const pathParts = pathname.split('/');
+    const participantId = pathParts[1];
   
-  // Skip middleware for non-participant routes
-  if (!participantId || pathParts.length < 3) {
-    return NextResponse.next();
-  }
+    // Skip middleware for non-participant routes
+    if (!participantId || pathParts.length < 3) {
+      return NextResponse.next();
+    }
   
-  // Skip middleware for API routes
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.next();
+    }
   
-  // Skip middleware for static files
-  if (pathname.includes('.')) {
-    return NextResponse.next();
-  }
+    if (pathname.includes('.')) {
+      return NextResponse.next();
+    }
   
-  const currentPage = pathParts[2];
+  // Get the current page
+    const currentPage = pathParts[2];
   
-  try {
-    // Fetch participant data
-    const participant = await prisma.participant.findUnique({
-      where: { id: participantId },
-    });
+  
+  // Fetch participant data
+    const apiRes = await fetch(new URL(`/api/${participantId}`, request.nextUrl.origin).toString());
+    const data = await apiRes.json();
+    let participant = data.participant;
     
+    // If participant not found, redirect to home page
     if (!participant) {
-      // If participant doesn't exist, redirect to home or show error
       return NextResponse.redirect(new URL('/', request.url));
     }
     
@@ -40,7 +38,14 @@ export async function middleware(request: NextRequest) {
     const accessRules = {
       'consent': () => participant.audioCheckPassed === true,
       'demographics': () => participant.consentGiven === true,
-      'audio': () => participant.demographics !== null && participant.demographics !== undefined
+      'audio': () => {
+        if (participant.demographics === null || participant.demographics === undefined) {
+          return false;
+        }
+        return Object.values(participant.demographics).every(
+          (value) => value !== ""
+        );
+      }
     };
     
     // Check if current page has access requirements
@@ -48,14 +53,13 @@ export async function middleware(request: NextRequest) {
       const hasAccess = accessRules[currentPage as keyof typeof accessRules]();
       
       if (!hasAccess) {
-        // Determine where to redirect based on what's missing
         let redirectPath = `/${participantId}`;
         
-        if (currentPage === 'consent' && !participant.audioCheckPassed) {
+        if (currentPage === 'consent') {
           redirectPath = `/${participantId}/pre-consent`;
-        } else if (currentPage === 'demographics' && !participant.consentGiven) {
+        } else if (currentPage === 'demographics') {
           redirectPath = `/${participantId}/consent`;
-        } else if (currentPage === 'audio' && (!participant.demographics || participant.demographics === null)) {
+        } else if (currentPage === 'audio' ) {
           redirectPath = `/${participantId}/demographics`;
         }
         
@@ -65,22 +69,11 @@ export async function middleware(request: NextRequest) {
     
     return NextResponse.next();
     
-  } catch (error) {
-    console.error('Middleware error:', error);
-    // On error, allow the request to proceed
-    return NextResponse.next();
-  }
+  
 }
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
