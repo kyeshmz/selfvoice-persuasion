@@ -4,7 +4,8 @@ CREATE TABLE "Participant" (
     "externalId" TEXT NOT NULL,
     "consentGiven" BOOLEAN NOT NULL DEFAULT false,
     "demographics" JSONB,
-    "audioUrl" TEXT,
+    "audioFile" TEXT,
+    "audioCheckPassed" BOOLEAN,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

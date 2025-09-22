@@ -8,10 +8,11 @@ datasource db {
 }
 
 model Participant {
-  id           String   @id @default(cuid())
-  externalId   String   @unique
-  consentGiven Boolean  @default(false)
-  demographics Json?
-  audioFile    String?
-  createdAt    DateTime @default(now())
+  id               String   @id @default(cuid())
+  externalId       String   @unique
+  consentGiven     Boolean  @default(false)
+  demographics     Json?
+  audioFile        String?
+  audioCheckPassed Boolean?
+  createdAt        DateTime @default(now())
 }
