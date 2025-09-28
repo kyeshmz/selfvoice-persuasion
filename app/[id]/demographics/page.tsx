@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { DataUtils } from "@/lib/data-utils"
 
 const QUESTIONS = [
   "How old are you?",
@@ -14,20 +15,25 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
     const [answers, setAnswers] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        fetch(`/api/${id}`)
-            .then(res => res.json())
-            .then(data => { setAnswers(data.participant.demographics || {});} );
+        DataUtils.getParticipant(id)
+            .then(participant => setAnswers(participant?.demographics as Record<string, string> || {}))
+            .catch(error => console.error('Failed to load participant data:', error));
     }, [id]);
 
     const saveAnswers = async () => {
-        await fetch(`/api/${id}/demographics`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ answers }),
-        });
+        try {
+            await DataUtils.updateDemographics(id, answers);
+        } catch (error) {
+            console.error('Failed to save demographics:', error);
+            alert('Failed to save demographics. Please try again.');
+        }
     };
     const handleChange = (q: string, val: string) => {
         setAnswers(prev => ({ ...prev, [q]: val }));
+    };
+
+    const isFormValid = () => {
+        return QUESTIONS.every(q => answers[q] && answers[q].trim() !== "");
     };
 
 
@@ -77,8 +83,13 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
                     Back
                 </button>
                 <button 
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+                        isFormValid() 
+                            ? "bg-blue-600 text-white hover:bg-blue-700" 
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                     onClick={handleNext}
+                    disabled={!isFormValid()}
                 >
                     Continue
                 </button>

@@ -13,7 +13,8 @@ model Participant {
   consentGiven     Boolean  @default(false)
   demographics     Json?
   audioFile        String?
-  audioCheckPassed Boolean?
+  eligible         Boolean  @default(true)
+  ineligibilityReason String?
   createdAt        DateTime @default(now())
   experiments      Experiment[]
 }

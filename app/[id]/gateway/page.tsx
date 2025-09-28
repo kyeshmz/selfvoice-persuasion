@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { DataUtils } from "@/lib/data-utils"
 
 interface AudioCheckResult {
     hasPermission: boolean
@@ -14,6 +15,11 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
     const { id } = use(params);
     const router = useRouter();
     const [audioCheck, setAudioCheck] = useState<AudioCheckResult | null>(null);
+    const [audioTries, setAudioTries] = useState<number>(0);
+    //const [birthday, setBirthday] = useState<string>("");
+    const [age, setAge] = useState<number>(0);
+    const [showQuestions, setShowQuestions] = useState(false);
+    const [audioAnswer, setAudioAnswer] = useState<string>("");
 
     const checkAudio = async (): Promise<AudioCheckResult> => {
         try {
@@ -65,11 +71,7 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
             setAudioCheck(result);
             
             if (result.canRecord) {
-                await fetch(`/api/${id}/pre-consent`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ audioCheckPassed: true }),
-                });
+                setShowQuestions(true);
             }
         } catch (error) {
             setAudioCheck({
@@ -81,12 +83,42 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const handleContinue = () => {
-        router.push(`/${id}/consent`);
+    const playAudio = () => {
+        const audio = new Audio('/synthesize.mp3');
+        audio.play();
     };
 
-    const handleRetry = () => {
+    const handleContinue = async () => {
+        console.log(age);
+        if (age < 18) {
+            await DataUtils.updateEligibility(id, false, "Age");
+            router.push(`/${id}/not-eligible`);
+            return;
+        }
+        if (audioAnswer !== "seven") {
+            await DataUtils.updateEligibility(id, false, "Human");
+            router.push(`/${id}/not-eligible`);
+            return;
+        }
+        await DataUtils.updateEligibility(id, true);
+        router.push(`/${id}/demographics`);
+    };
+
+    const handleRetry = async () => {
+        setAudioTries(audioTries + 1);
+        if (audioTries >= 5) {
+            try {
+                await DataUtils.updateEligibility(id, false, "Audio");
+                router.push(`/${id}/not-eligible`);
+            } catch (error) {
+                console.error('Failed to update eligibility:', error);
+                // Still redirect even if database update fails
+                router.push(`/${id}/not-eligible`);
+            }
+            return;
+        }
         setAudioCheck(null);
+        await handleCheckAudio();
     };
 
     const isAudioReady = audioCheck?.hasPermission && audioCheck?.hasMicrophone && audioCheck?.canRecord;
@@ -155,9 +187,15 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                             <div className="flex items-start gap-3">
                                 <div className="text-red-500 mt-0.5">⚠️</div>
-                                <div>
+                                <div className="flex-1">
                                     <h3 className="font-medium text-red-800 mb-1">Audio Setup Issue</h3>
-                                    <p className="text-red-700">{audioCheck.error}</p>
+                                    <p className="text-red-700 mb-3">{audioCheck.error}</p>
+                                    <button
+                                        onClick={handleRetry}
+                                        className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                                    >
+                                        Retry Audio Check
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -171,40 +209,88 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
                                 <div>
                                     <h3 className="font-medium text-green-800 mb-1">Audio Setup Complete</h3>
                                     <p className="text-green-700">
-                                        Your microphone is ready for recording. You can now proceed to the consent form.
+                                        Your microphone is ready for recording.
                                     </p>
                                 </div>
                             </div>
                         </div>
                     )}
+                </div>
+            )}
 
-                    {/* Action buttons */}
-                    <div className="flex justify-between items-center pt-4">
-                        <button
-                            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-                            onClick={() => router.push(`/${id}`)}
-                        >
-                            Back
-                        </button>
+            {/* Birthday and Age Questions */}
+            {showQuestions && (
+                <div className="mt-8 space-y-6">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                        <h2 className="text-lg font-semibold text-blue-800 mb-4">Additional Information</h2>
+                        
+                        <div className="space-y-4">
+                            {/* Birthday Question 
+                            <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                <label className="block font-medium text-gray-900 mb-2">
+                                    What is your birthday?
+                                </label>
+                                <input
+                                    type="date"
+                                    value={birthday}
+                                    onChange={(e) => setBirthday(e.target.value)}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    max={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>*/}
 
-                        <div className="flex gap-3">
-                            {!isAudioReady && (
-                                <button
-                                    className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition-colors"
-                                    onClick={handleRetry}
+
+                            {/* Age Question */}
+                            <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                <label className="block font-medium text-gray-900 mb-2">
+                                    What is your age?
+                                </label>
+                                <select
+                                    value={age}
+                                    onChange={(e) => setAge(e.target.value ? parseInt(e.target.value, 10) : 0)}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                                 >
-                                    Try Again
-                                </button>
-                            )}
-                            
-                            {isAudioReady && (
-                                <button
-                                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors"
-                                    onClick={handleContinue}
-                                >
-                                    Continue
-                                </button>
-                            )}
+                                    <option value="">Select your age</option>
+                                    {Array.from({ length: 100 }, (_, i) => i + 1).map(num => (
+                                        <option key={num} value={num}>{num}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Audio Question */}
+                            <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                <label className="block font-medium text-gray-900 mb-2">
+                                    What is the second word in the audio?
+                                </label>
+                                <div className="space-y-4">
+                                    <button
+                                        onClick={playAudio}
+                                        className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                    >
+                                        {"Play Audio"}
+                                    </button>
+                                    
+                                    <select
+                                        value={audioAnswer}
+                                        onChange={(e) => setAudioAnswer(e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                    >
+                                        <option value="">Select the second word</option>
+                                        {["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"].map((word) => (
+                                            <option key={word} value={word}>{word}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex justify-between items-center mt-6">
+                            <button
+                                className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                disabled={!age || !audioAnswer}
+                                onClick={handleContinue}
+                            >
+                                Continue
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { use, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
+import { DataUtils } from "@/lib/data-utils"
 
 export default function AudioPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -52,13 +53,12 @@ export default function AudioPage({ params }: { params: Promise<{ id: string }> 
         const blob = new Blob(chunks.current, { type: "audio/webm" });
         chunks.current = [];
 
-        const formData = new FormData();
-        formData.append("audio", blob, "recording.webm");
-
-        await fetch(`/api/${id}/audio`, {
-            method: "PATCH",
-            body: formData,
-        });
+        try {
+            await DataUtils.updateAudioFile(id, blob);
+        } catch (error) {
+            console.error('Failed to save audio:', error);
+            alert('Failed to save audio. Please try again.');
+        }
     };
 
     return (

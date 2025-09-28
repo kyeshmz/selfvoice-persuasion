@@ -1,23 +1,25 @@
 'use client';
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DataUtils } from "@/lib/data-utils";
 
 export default function ConsentPage({ params }: { params: Promise<{ id: string }>}) {
     const router = useRouter();
     const { id } = use(params);
     const [consent, setConsent] = useState(false);
     useEffect(() => {
-        fetch(`/api/${id}`)
-            .then(res => res.json())
-            .then(data => setConsent(data.participant.consentGiven))
-        }, [id]);
+        DataUtils.getParticipant(id)
+            .then(participant => setConsent(participant?.consentGiven || false))
+            .catch(error => console.error('Failed to load participant data:', error));
+    }, [id]);
     const handleConsent = async () => {
-        await fetch(`/api/${id}/consent`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ consent: true }),
-        });
-        router.push(`/${id}/demographics`);
+        try {
+            await DataUtils.updateConsent(id, true);
+            router.push(`/${id}/gateway`);
+        } catch (error) {
+            console.error('Failed to save consent:', error);
+            alert('Failed to save consent. Please try again.');
+        }
     }
 
     const handleBack = () => {
