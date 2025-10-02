@@ -3,7 +3,8 @@ import {
   updateConsent,
   updateDemographics,
   getParticipant,
-  updateEligibility
+  updateEligibility,
+  getOrCreateExperiment
 } from './server-actions';
 
 export class DataUtils {
@@ -25,5 +26,9 @@ export class DataUtils {
 
   static async updateEligibility(id: string, eligible: boolean, reason?: string) {
     return await updateEligibility(id, eligible, reason);
+  }
+
+  static async getOrCreateExperiment(id: string) {
+    return await getOrCreateExperiment(id);
   }
 }

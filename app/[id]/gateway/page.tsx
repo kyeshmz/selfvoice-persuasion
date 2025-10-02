@@ -83,10 +83,6 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
         }
     };
 
-    const playAudio = () => {
-        const audio = new Audio('/synthesize.mp3');
-        audio.play();
-    };
 
     const handleContinue = async () => {
         console.log(age);
@@ -263,12 +259,14 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
                                     What is the second word in the audio?
                                 </label>
                                 <div className="space-y-4">
-                                    <button
-                                        onClick={playAudio}
-                                        className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                                    <audio 
+                                        controls 
+                                        className="w-full"
+                                        preload="metadata"
                                     >
-                                        {"Play Audio"}
-                                    </button>
+                                        <source src="/synthesize.mp3" type="audio/mpeg" />
+                                        Your browser does not support the audio element.
+                                    </audio>
                                     
                                     <select
                                         value={audioAnswer}

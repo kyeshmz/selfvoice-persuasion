@@ -8,23 +8,24 @@ datasource db {
 }
 
 model Participant {
-  id               String   @id @default(cuid())
-  externalId       String   @unique
-  consentGiven     Boolean  @default(false)
-  demographics     Json?
-  audioFile        String?
-  eligible         Boolean  @default(true)
+  id                  String       @id @default(cuid())
+  externalId          String       @unique
+  consentGiven        Boolean      @default(false)
+  demographics        Json?
+  audioFile           String?
+  eligible            Boolean      @default(true)
   ineligibilityReason String?
-  createdAt        DateTime @default(now())
-  experiments      Experiment[]
+  createdAt           DateTime     @default(now())
+  voiceId             String?
+  experiments         Experiment[]
 }
 
 model Experiment {
-  id               String     @id @default(cuid())
-  studyId          String
-  sessionId        String
-  participantId    String
-  completedAt      DateTime?
-  createdAt        DateTime @default(now())
-  participant Participant @relation(fields: [participantId], references: [id])
+  id              String      @id @default(cuid())
+  voiceEmbeddings Json?
+  experimentFile  String?
+  participantId   String
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  participant     Participant @relation(fields: [participantId], references: [id])
 }

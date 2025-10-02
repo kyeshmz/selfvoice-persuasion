@@ -3,6 +3,7 @@
 import { use, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DataUtils } from "@/lib/data-utils"
+import { VoiceUtils } from "@/lib/voice-utils"
 
 export default function AudioPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -50,17 +51,27 @@ export default function AudioPage({ params }: { params: Promise<{ id: string }> 
     };
 
     const uploadRecording = async () => {
-        const blob = new Blob(chunks.current, { type: "audio/webm" });
+        const blob = new Blob(chunks.current, { type: "audio/mp3" });
         chunks.current = [];
 
         try {
             await DataUtils.updateAudioFile(id, blob);
         } catch (error) {
             console.error('Failed to save audio:', error);
-            alert('Failed to save audio. Please try again.');
         }
+        
     };
-
+    const handleNext = async () => {
+        try {
+            await VoiceUtils.uploadVoice(id);
+        } catch (error) {
+            console.error('Failed to upload voice:', error);
+        }
+        const experiment = await DataUtils.getOrCreateExperiment(id);
+        await VoiceUtils.mixVoice(id);
+        await VoiceUtils.getRecording(experiment.id, "Imagine holding not just a pen, but a tool that captures your ideas the instant they spark. This pen glides effortlessly across the page—no smudges, no skips—turning thoughts into words as smoothly as you think them. It's sleek, balanced, and professional, making every signature feel confident and every note memorable. Need to impress in a meeting? Close a deal? Leave a mark? This pen does more than write—it elevates your presence. For just a few dollars, you're not buying ink and plastic. You're investing in clarity, confidence, and the power to turn imagination into reality. Ready to sign?");
+        router.push(`/${id}/${experiment.id}/`);
+    }
     return (
         <div className="p-6 max-w-2xl mx-auto">
             <h1 className="text-2xl font-bold mb-6">Record Your Audio</h1>
@@ -68,7 +79,7 @@ export default function AudioPage({ params }: { params: Promise<{ id: string }> 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
                 <h2 className="text-lg font-semibold text-blue-800 mb-3">Recording Instructions</h2>
                 <div className="text-blue-700 text-sm space-y-2">
-                    <p>Please record a short audio sample of yourself speaking. </p>
+                    <p>Please record a short audio sample of yourself saying "The quick brown fox jumps over the lazy dog. The sky is blue and one plus one is two." </p>
                 </div>
             </div>
 
@@ -115,7 +126,7 @@ export default function AudioPage({ params }: { params: Promise<{ id: string }> 
                 </button>
                 <button
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                    onClick={() => router.push(`/${id}/done`)}
+                    onClick={handleNext}
                 >
                     Finish Study
                 </button>

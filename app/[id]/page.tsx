@@ -7,7 +7,7 @@ export default function Home({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const {id} = use(params);
   const startStudy = async () => {
-    router.push(`/${id}/pre-consent`)
+    router.push(`/${id}/consent`)
   }
 
   return (
