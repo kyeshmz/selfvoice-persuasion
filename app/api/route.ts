@@ -14,6 +14,6 @@ export async function GET(request: NextRequest) {
     update: {},
     create: { externalId },
   });
-  const redirectUrl = new URL(`/${participant.id}/`, new URL(request.url).origin).toString();
+  const redirectUrl = new URL(`/${participant.id}/consent`, new URL(request.url).origin).toString();
   return NextResponse.redirect(redirectUrl);
 }

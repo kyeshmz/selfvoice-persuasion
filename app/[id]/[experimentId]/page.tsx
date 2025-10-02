@@ -1,8 +1,8 @@
 'use client';
 
 import { use, useState } from 'react';
-
-import { VoiceUtils } from '@/lib/voice-utils';
+import { DataUtils } from '@/lib/data-utils';
+import { useRouter } from 'next/navigation';
 
 
 interface AudioPlayerProps {
@@ -45,7 +45,8 @@ function AudioPlayer({ src, label, color }: AudioPlayerProps) {
 export default function ExperimentPage({ params }: { params: Promise<{ id: string, experimentId: string }> }) {
   const { id, experimentId } = use(params);
   const [ratings, setRatings] = useState<Record<string, { left: number; right: number }>>({});
-  
+  const router = useRouter();
+
   const questions = [
 
     {
@@ -81,10 +82,9 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
     return questionRatings?.left > 0 && questionRatings?.right > 0;
   });
 
-  const handleSubmit = () => {
-    console.log('Ratings:', ratings);
-    // Here you would typically save the ratings to your backend
-    alert('Thank you for your responses!');
+  const handleSubmit = async() => {
+    await DataUtils.saveRatings(experimentId, ratings);
+    router.push(`/${id}/${experimentId}/done`);
   };
 
   return (

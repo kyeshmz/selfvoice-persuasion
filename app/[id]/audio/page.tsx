@@ -68,7 +68,7 @@ export default function AudioPage({ params }: { params: Promise<{ id: string }> 
             console.error('Failed to upload voice:', error);
         }
         const experiment = await DataUtils.getOrCreateExperiment(id);
-        await VoiceUtils.mixVoice(id);
+        await VoiceUtils.mixVoice(id, experiment.id);
         await VoiceUtils.getRecording(experiment.id, "Imagine holding not just a pen, but a tool that captures your ideas the instant they spark. This pen glides effortlessly across the page—no smudges, no skips—turning thoughts into words as smoothly as you think them. It's sleek, balanced, and professional, making every signature feel confident and every note memorable. Need to impress in a meeting? Close a deal? Leave a mark? This pen does more than write—it elevates your presence. For just a few dollars, you're not buying ink and plastic. You're investing in clarity, confidence, and the power to turn imagination into reality. Ready to sign?");
         router.push(`/${id}/${experiment.id}/`);
     }
@@ -128,7 +128,7 @@ export default function AudioPage({ params }: { params: Promise<{ id: string }> 
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     onClick={handleNext}
                 >
-                    Finish Study
+                    Continue
                 </button>
             </div>
         </div>

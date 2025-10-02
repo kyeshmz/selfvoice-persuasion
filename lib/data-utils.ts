@@ -4,7 +4,8 @@ import {
   updateDemographics,
   getParticipant,
   updateEligibility,
-  getOrCreateExperiment
+  getOrCreateExperiment,
+  saveRatings
 } from './server-actions';
 
 export class DataUtils {
@@ -30,5 +31,9 @@ export class DataUtils {
 
   static async getOrCreateExperiment(id: string) {
     return await getOrCreateExperiment(id);
+  }
+
+  static async saveRatings(experimentId: string, ratings: Record<string, { left: number; right: number }>) {
+    return await saveRatings(experimentId, ratings);
   }
 }

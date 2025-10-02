@@ -112,7 +112,7 @@ export async function getOrCreateExperiment(participantId: string) {
 }
 
 
-export async function mixVoice(id: string, alpha: number = 1) {
+export async function mixVoice(id: string, experimentId: string, alpha: number) {
   const participant = await prisma.participant.findUnique({
     where: { id },
   });
@@ -140,23 +140,19 @@ export async function mixVoice(id: string, alpha: number = 1) {
       ]
     })
   } satisfies RequestInit;
+  console.log(options);
   try {
     const response = await fetch(url, options);
     const data = await response.json();
-    // Update the most recent experiment for this participant
-    const mostRecentExperiment = await prisma.experiment.findFirst({
-      where: { participantId: id },
-      orderBy: { createdAt: 'desc' },
+    console.log(data.embedding);
+    await prisma.experiment.update({
+      where: { id: experimentId },
+      data: { voiceEmbeddings: data.embedding },
     });
-    
-    if (mostRecentExperiment) {
-      await prisma.experiment.update({
-        where: { id: mostRecentExperiment.id },
-        data: { voiceEmbeddings: data.embedding },
-      });
-    }
+    return data.embedding;
   } catch (error) {
     console.error(error);
+    throw error;
   }
 }
 
@@ -170,7 +166,7 @@ export async function getRecording(experimentId: string, input: string) {
   if (experiment.experimentFile) {
     return experiment.experimentFile;
   }
-  const embedding = experiment.voiceEmbeddings;
+  const embedding = experiment.voiceEmbeddings as number[];
   if (!embedding) {
     throw new Error("No embedding found for experiment");
   }
@@ -208,26 +204,17 @@ export async function getRecording(experimentId: string, input: string) {
   return updated;
 }
 
-export async function getAudioFile(experimentId: string) {
+
+export async function saveRatings(experimentId: string, ratings: Record<string, { left: number; right: number }>) {
   const experiment = await prisma.experiment.findUnique({
     where: { id: experimentId },
   });
-  
   if (!experiment) {
     throw new Error("Experiment not found");
   }
-  
-  if (!experiment.experimentFile) {
-    throw new Error("No audio file found for experiment");
-  }
-  
-  const filePath = path.join('experiments', experiment.experimentFile);
-  
-  if (!fs.existsSync(filePath)) {
-    throw new Error("Audio file not found on disk");
-  }
-  
-  const fileBuffer = fs.readFileSync(filePath);
-  return fileBuffer;
+  const updated = await prisma.experiment.update({
+    where: { id: experimentId },
+    data: { ratings, completedAt: new Date() },
+  });
+  return updated;
 }
-

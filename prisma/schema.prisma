@@ -27,5 +27,7 @@ model Experiment {
   participantId   String
   completedAt     DateTime?
   createdAt       DateTime    @default(now())
+  ratings         Json?
   participant     Participant @relation(fields: [participantId], references: [id])
 }
+

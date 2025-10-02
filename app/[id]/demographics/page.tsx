@@ -20,14 +20,6 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
             .catch(error => console.error('Failed to load participant data:', error));
     }, [id]);
 
-    const saveAnswers = async () => {
-        try {
-            await DataUtils.updateDemographics(id, answers);
-        } catch (error) {
-            console.error('Failed to save demographics:', error);
-            alert('Failed to save demographics. Please try again.');
-        }
-    };
     const handleChange = (q: string, val: string) => {
         setAnswers(prev => ({ ...prev, [q]: val }));
     };
@@ -38,13 +30,13 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
 
 
     const handleNext = async () => {
-        await saveAnswers();
+        await DataUtils.updateDemographics(id, answers);
         router.push(`/${id}/audio`);
     };
 
     const handleBack = async () => {
-        await saveAnswers();
-        router.push(`/${id}/consent`);
+        await DataUtils.updateDemographics(id, answers);
+        router.push(`/${id}/gateway`);
     };
 
     return (
