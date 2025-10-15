@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { DataUtils } from '@/lib/data-utils';
 import { useRouter } from 'next/navigation';
 
@@ -18,7 +18,7 @@ function AudioPlayer({ src, label, color }: AudioPlayerProps) {
       border: 'border-blue-200'
     },
     green: {
-      dot: 'bg-green-500',
+      dot: 'bg-blue-500',
       border: 'border-green-200'
     }
   };
@@ -31,6 +31,7 @@ function AudioPlayer({ src, label, color }: AudioPlayerProps) {
       </div>
       
       <audio 
+        key={src}
         controls 
         className="w-full"
         preload="metadata"
@@ -44,8 +45,14 @@ function AudioPlayer({ src, label, color }: AudioPlayerProps) {
 
 export default function ExperimentPage({ params }: { params: Promise<{ id: string, experimentId: string }> }) {
   const { id, experimentId } = use(params);
-  const [ratings, setRatings] = useState<Record<string, { left: number; right: number }>>({});
+  const [ratings, setRatings] = useState<Record<string, { original: number; mixed: number }>>({});
+  const [leftBaseline, setLeftBaseline] = useState<boolean>(false);
   const router = useRouter();
+
+  // Randomize positioning on component mount
+  useEffect(() => {
+    setLeftBaseline(Math.random() < 0.5);
+  }, []);
 
   const questions = [
 
@@ -72,18 +79,31 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        [side]: rating
+        [side === 'left' ? (leftBaseline ? 'original' : 'mixed') : (leftBaseline ? 'mixed' : 'original')]: rating
       }
     }));
   };
 
   const isComplete = questions.every(q => {
     const questionRatings = ratings[q.id];
-    return questionRatings?.left > 0 && questionRatings?.right > 0;
+    return questionRatings?.original > 0 && questionRatings?.mixed > 0;
   });
 
   const handleSubmit = async() => {
-    await DataUtils.saveRatings(experimentId, ratings);
+    // Transform ratings to store by alpha value
+    const ratingsData = {
+      0.9: {} as Record<string, number>, 
+      0: {} as Record<string, number>
+    };
+    
+    // Populate the ratings for each alpha value
+    Object.keys(ratings).forEach(questionId => {
+      const questionRatings = ratings[questionId];
+      ratingsData[0.9][questionId] = questionRatings.mixed;
+      ratingsData[0][questionId] = questionRatings.original;
+    });
+    
+    await DataUtils.saveRatings(experimentId, ratingsData);
     router.push(`/${id}/${experimentId}/done`);
   };
 
@@ -99,8 +119,8 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
           {/* Left Side - Audio A with Questions */}
           <div className="space-y-6">
             <AudioPlayer 
-              src="/base_script.mp3" 
-              label="Audio A" 
+              src={leftBaseline ? "/base_script.mp3" : `/experiments/${experimentId}.mp3`} 
+              label="Audio A"
               color="blue" 
             />
             
@@ -119,7 +139,7 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
                         key={value}
                         onClick={() => handleRatingChange(question.id, 'left', value)}
                         className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${
-                          ratings[question.id]?.left === value
+                          ratings[question.id]?.[leftBaseline ? 'original' : 'mixed'] === value
                             ? 'bg-blue-500 border-blue-500 text-white shadow-lg scale-110'
                             : 'bg-white border-gray-300 text-gray-600 hover:border-blue-300 hover:bg-blue-50'
                         }`}
@@ -140,7 +160,7 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
           {/* Right Side - Audio B with Questions */}
           <div className="space-y-6">
             <AudioPlayer 
-              src={`/experiments/${experimentId}.mp3`} 
+              src={leftBaseline ? `/experiments/${experimentId}.mp3` : "/base_script.mp3"} 
               label="Audio B" 
               color="blue" 
             />
@@ -160,7 +180,7 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
                         key={value}
                         onClick={() => handleRatingChange(question.id, 'right', value)}
                         className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${
-                          ratings[question.id]?.right === value
+                          ratings[question.id]?.[leftBaseline ? 'mixed' : 'original'] === value
                             ? 'bg-blue-500 border-blue-500 text-white shadow-lg scale-110'
                             : 'bg-white border-gray-300 text-gray-600 hover:border-blue-300 hover:bg-blue-50'
                         }`}

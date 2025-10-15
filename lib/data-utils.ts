@@ -33,7 +33,7 @@ export class DataUtils {
     return await getOrCreateExperiment(id);
   }
 
-  static async saveRatings(experimentId: string, ratings: Record<string, { left: number; right: number }>) {
+  static async saveRatings(experimentId: string, ratings: Record<number, Record<string, number>>) {
     return await saveRatings(experimentId, ratings);
   }
 }

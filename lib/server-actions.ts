@@ -136,11 +136,11 @@ export async function mixVoice(id: string, experimentId: string, alpha: number) 
     body: JSON.stringify({
       voices: [
         { id: voiceId, weight: alpha },
-        { id: baseVoiceId, weight: 1 }
+        { id: baseVoiceId, weight: 1 - alpha }
       ]
     })
   } satisfies RequestInit;
-  console.log(options);
+
   try {
     const response = await fetch(url, options);
     const data = await response.json();
@@ -205,13 +205,14 @@ export async function getRecording(experimentId: string, input: string) {
 }
 
 
-export async function saveRatings(experimentId: string, ratings: Record<string, { left: number; right: number }>) {
+export async function saveRatings(experimentId: string, ratings: Record<number, Record<string, number>>) {
   const experiment = await prisma.experiment.findUnique({
     where: { id: experimentId },
   });
   if (!experiment) {
     throw new Error("Experiment not found");
   }
+  
   const updated = await prisma.experiment.update({
     where: { id: experimentId },
     data: { ratings, completedAt: new Date() },
