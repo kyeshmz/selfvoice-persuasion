@@ -28,16 +28,43 @@ export async function updateConsent(id: string, consent: boolean) {
 }
 
 export async function updateDemographics(id: string, answers: Record<string, string>) {
-  const updated = await prisma.participant.update({
-    where: { id },
-    data: { demographics: answers },
+  // Extract the specific demographics fields from the answers object
+  const age = answers["What is your age?"] || "";
+  const firstLanguage = answers["What is your first language?"] || "";
+  const gender = answers["What is your gender?"] || null;
+  const aiUse = answers["How often do you use AI tools?"] || null;
+  const country = answers["What country do you currently live in?"] || null;
+  
+  // Upsert demographics data
+  const demographics = await prisma.demographics.upsert({
+    where: { participantId: id },
+    update: {
+      age,
+      firstLanguage,
+      gender,
+      aiUse,
+      country,
+    },
+    create: {
+      participantId: id,
+      age,
+      firstLanguage,
+      gender,
+      aiUse,
+      country,
+    },
   });
-  return updated;
+  
+  return demographics;
 }
+
 
 export async function getParticipant(id: string) {
   const participant = await prisma.participant.findUnique({
     where: { id },
+    include: {
+      demographicsData: true,
+    },
   });
   return participant;
 }
@@ -205,7 +232,7 @@ export async function getRecording(experimentId: string, input: string) {
 }
 
 
-export async function saveRatings(experimentId: string, ratings: Record<number, Record<string, number>>) {
+export async function saveRatings(experimentId: string, ratingsData: Array<{ alpha: number; naturalness: number; persuasiveness: number; trustworthiness: number; preference: number; }>) {
   const experiment = await prisma.experiment.findUnique({
     where: { id: experimentId },
   });
@@ -213,9 +240,53 @@ export async function saveRatings(experimentId: string, ratings: Record<number, 
     throw new Error("Experiment not found");
   }
   
+  // Create rating records for each alpha value
+  await prisma.rating.createMany({
+    data: ratingsData.map(rating => ({
+      experimentId,
+      alpha: rating.alpha,
+      naturalness: rating.naturalness,
+      persuasiveness: rating.persuasiveness,
+      trustworthiness: rating.trustworthiness,
+      preference: rating.preference,
+    }))
+  });
+  
   const updated = await prisma.experiment.update({
     where: { id: experimentId },
-    data: { ratings, completedAt: new Date() },
+    data: { completedAt: new Date() },
   });
+  
   return updated;
+}
+
+export async function savePostStudyQuestions(id: string, answers: Record<string, string>) {
+  const participant = await prisma.participant.findUnique({
+    where: { id },
+  });
+  if (!participant) {
+    throw new Error("Participant not found");
+  }
+  
+  // Map the question text to database fields
+  const source = answers["How did you hear about this study?"] || "";
+  const interest = answers["How interesting did you find the study?"] || "";
+  const comments = answers["Any other comments?"] || null;
+  
+  const postSurvey = await prisma.postSurvey.upsert({
+    where: { participantId: id },
+    update: {
+      source,
+      interest,
+      comments,
+    },
+    create: {
+      participantId: id,
+      source,
+      interest,
+      comments,
+    },
+  });
+  
+  return postSurvey;
 }

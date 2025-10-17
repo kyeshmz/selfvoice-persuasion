@@ -90,21 +90,26 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
   });
 
   const handleSubmit = async() => {
-    // Transform ratings to store by alpha value
-    const ratingsData = {
-      0.9: {} as Record<string, number>, 
-      0: {} as Record<string, number>
-    };
-    
-    // Populate the ratings for each alpha value
-    Object.keys(ratings).forEach(questionId => {
-      const questionRatings = ratings[questionId];
-      ratingsData[0.9][questionId] = questionRatings.mixed;
-      ratingsData[0][questionId] = questionRatings.original;
-    });
+    // Transform ratings into array with alpha values
+    const ratingsData = [
+      {
+        alpha: 0,  // Baseline (original)
+        naturalness: ratings['naturalness']?.original || 0,
+        persuasiveness: ratings['persuasiveness']?.original || 0,
+        trustworthiness: ratings['trustworthiness']?.original || 0,
+        preference: ratings['preference']?.original || 0
+      },
+      {
+        alpha: 0.9,  // Mixed voice
+        naturalness: ratings['naturalness']?.mixed || 0,
+        persuasiveness: ratings['persuasiveness']?.mixed || 0,
+        trustworthiness: ratings['trustworthiness']?.mixed || 0,
+        preference: ratings['preference']?.mixed || 0
+      }
+    ];
     
     await DataUtils.saveRatings(experimentId, ratingsData);
-    router.push(`/${id}/${experimentId}/done`);
+    router.push(`/${id}/post`);
   };
 
   return (
@@ -116,7 +121,7 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Left Side - Audio A with Questions */}
+          {/* Left Side */}
           <div className="space-y-6">
             <AudioPlayer 
               src={leftBaseline ? "/base_script.mp3" : `/experiments/${experimentId}.mp3`} 
@@ -157,7 +162,7 @@ export default function ExperimentPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
           
-          {/* Right Side - Audio B with Questions */}
+          {/* Right Side */}
           <div className="space-y-6">
             <AudioPlayer 
               src={leftBaseline ? `/experiments/${experimentId}.mp3` : "/base_script.mp3"} 

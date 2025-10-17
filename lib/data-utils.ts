@@ -5,7 +5,8 @@ import {
   getParticipant,
   updateEligibility,
   getOrCreateExperiment,
-  saveRatings
+  saveRatings,
+  savePostStudyQuestions
 } from './server-actions';
 
 export class DataUtils {
@@ -33,7 +34,19 @@ export class DataUtils {
     return await getOrCreateExperiment(id);
   }
 
-  static async saveRatings(experimentId: string, ratings: Record<number, Record<string, number>>) {
-    return await saveRatings(experimentId, ratings);
+  static async saveRatings(
+    experimentId: string,
+    ratingsData: Array<{
+      alpha: number;
+      naturalness: number;
+      persuasiveness: number;
+      trustworthiness: number;
+      preference: number;
+    }>
+  ) {
+    return await saveRatings(experimentId, ratingsData);
+  }
+  static async savePostStudyQuestions(id: string, answers: Record<string, string>) {
+    return await savePostStudyQuestions(id, answers);
   }
 }

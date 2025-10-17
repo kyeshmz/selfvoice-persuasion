@@ -5,8 +5,32 @@ import { useRouter } from "next/navigation"
 import { DataUtils } from "@/lib/data-utils"
 
 const QUESTIONS = [
-  "How old are you?",
-  "What is your first language?",
+  {
+    question: "What is your age?",
+    type: "number" as const,
+    min: 18,
+    max: 100
+  },
+  {
+    question: "What is your first language?",
+    type: "select" as const,
+    options: ["English", "Spanish", "Mandarin", "Hindi", "Arabic", "Portuguese", "Bengali", "Russian", "Japanese", "Other"]
+  },
+  {
+    question: "What is your gender?",
+    type: "select" as const,
+    options: ["Male", "Female", "Non-binary", "Prefer not to say", "Other"]
+  },
+  {
+    question: "How often do you use AI tools?",
+    type: "select" as const,
+    options: ["Daily", "Several times a week", "Once a week", "A few times a month", "Rarely", "Never"]
+  },
+  {
+    question: "What country do you currently live in?",
+    type: "select" as const,
+    options: ["United States", "United Kingdom", "Canada", "Australia", "India", "Germany", "France", "China", "Japan", "Brazil", "Other"]
+  }
 ]
 
 export default function QuestionsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +40,18 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
 
     useEffect(() => {
         DataUtils.getParticipant(id)
-            .then(participant => setAnswers(participant?.demographics as Record<string, string> || {}))
+            .then(participant => {
+                if (participant?.demographicsData) {
+                    const { age, firstLanguage, gender, aiUse, country } = participant.demographicsData;
+                    setAnswers({
+                        "What is your age?": age || "",
+                        "What is your first language?": firstLanguage || "",
+                        "What is your gender?": gender || "",
+                        "How often do you use AI tools?": aiUse || "",
+                        "What country do you currently live in?": country || "",
+                    });
+                }
+            })
             .catch(error => console.error('Failed to load participant data:', error));
     }, [id]);
 
@@ -25,7 +60,7 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
     };
 
     const isFormValid = () => {
-        return QUESTIONS.every(q => answers[q] && answers[q].trim() !== "");
+        return QUESTIONS.every(q => answers[q.question] && answers[q.question].trim() !== "");
     };
 
 
@@ -52,17 +87,34 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
 
             <form className="space-y-6">
                 {QUESTIONS.map((q, index) => (
-                    <div key={q} className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div key={q.question} className="bg-white border border-gray-200 rounded-lg p-6">
                         <label className="block font-medium text-gray-900 mb-3">
-                            {q}
+                            {q.question}
                         </label>
-                        <input
-                            type="text"
-                            value={answers[q] || ""}
-                            onChange={e => handleChange(q, e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            placeholder={`Please enter your ${q.toLowerCase().replace('?', '')}...`}
-                        />
+                        {q.type === "number" ? (
+                            <input
+                                type="number"
+                                min={q.min}
+                                max={q.max}
+                                value={answers[q.question] || ""}
+                                onChange={e => handleChange(q.question, e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                placeholder={`Enter a number between ${q.min} and ${q.max}`}
+                            />
+                        ) : (
+                            <select
+                                value={answers[q.question] || ""}
+                                onChange={e => handleChange(q.question, e.target.value)}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
+                            >
+                                <option value="" disabled>Select an option...</option>
+                                {q.options?.map(option => (
+                                    <option key={option} value={option}>
+                                        {option}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                 ))}
             </form>

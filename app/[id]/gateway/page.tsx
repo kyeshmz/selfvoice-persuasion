@@ -125,8 +125,7 @@ export default function PreConsentPage({ params }: { params: Promise<{ id: strin
             
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <p className="text-blue-800">
-                    Before we begin, we need to check that your microphone is working properly. 
-                    This will help ensure a smooth recording experience.
+                    Before we begin, we need to check that your microphone is working properly and you are able to understand instructions.
                 </p>
             </div>
 
