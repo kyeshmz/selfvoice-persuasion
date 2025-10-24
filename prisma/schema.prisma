@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./db.sqlite3"
+}
+
+model Participant {
+  id                  String         @id @default(cuid())
+  externalId          String         @unique
+  consentGiven        Boolean        @default(false)
+  audioFile           String?
+  eligible            Boolean        @default(true)
+  ineligibilityReason String?
+  createdAt           DateTime       @default(now())
+  voiceId             String?
+  experiments         Experiment[]
+  demographicsData    Demographics?
+  postSurvey          PostSurvey?
+}
+
+model Demographics {
+  id            String      @id @default(cuid())
+  participantId String      @unique
+  age           String
+  firstLanguage String
+  gender        String?
+  aiUse         String?
+  country       String?
+  participant   Participant @relation(fields: [participantId], references: [id])
+}
+
+model Experiment {
+  id              String      @id @default(cuid())
+  participantId   String
+  voiceEmbeddings Json?
+  experimentFile  String?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  ratings         Rating[]
+  participant     Participant @relation(fields: [participantId], references: [id])
+}
+
+model Rating {
+  id              String      @id @default(cuid())
+  experimentId    String
+  alpha           Float
+  naturalness     Int
+  persuasiveness  Int
+  trustworthiness Int
+  preference      Int
+  createdAt       DateTime    @default(now())
+  experiment      Experiment  @relation(fields: [experimentId], references: [id])
+}
+
+model PostSurvey {
+  id              String      @id @default(cuid())
+  participantId   String      @unique
+  source          String
+  interest        String
+  comments        String?
+  participant     Participant @relation(fields: [participantId], references: [id])
+}

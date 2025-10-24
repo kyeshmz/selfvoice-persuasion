@@ -1,0 +1,23 @@
+/*
+  Warnings:
+
+  - You are about to drop the column `experimentFiles` on the `Experiment` table. All the data in the column will be lost.
+
+*/
+-- RedefineTables
+PRAGMA defer_foreign_keys=ON;
+PRAGMA foreign_keys=OFF;
+CREATE TABLE "new_Experiment" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "voiceEmbeddings" JSONB,
+    "experimentFile" TEXT,
+    "participantId" TEXT NOT NULL,
+    "completedAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Experiment_participantId_fkey" FOREIGN KEY ("participantId") REFERENCES "Participant" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+INSERT INTO "new_Experiment" ("completedAt", "createdAt", "id", "participantId", "voiceEmbeddings") SELECT "completedAt", "createdAt", "id", "participantId", "voiceEmbeddings" FROM "Experiment";
+DROP TABLE "Experiment";
+ALTER TABLE "new_Experiment" RENAME TO "Experiment";
+PRAGMA foreign_keys=ON;
+PRAGMA defer_foreign_keys=OFF;
