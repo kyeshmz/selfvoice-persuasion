@@ -15,8 +15,9 @@ export async function middleware(request: NextRequest) {
   
   const [, participantId, route] = pathMatch;
   
-  // Skip middleware for API routes and static files
+  // Skip middleware for initation and static files
   if (
+    pathname.startsWith('/study/') ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/static/') ||
@@ -167,12 +168,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
+     * - study (study routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!study|api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
 

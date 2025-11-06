@@ -5,13 +5,13 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl is optional - only needed if you want to run migrations directly
-  // directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Participant {
   id                  String         @id @default(cuid())
-  externalId          String         @unique
+  prolificPid         String         @unique
+  studyId             String?
+  sessionId           String?
   consentGiven        Boolean        @default(false)
   audioFile           String?
   eligible            Boolean        @default(true)
