@@ -40,7 +40,7 @@ export default function QuestionsPage({ params }: { params: Promise<{ id: string
 
     const handleNext = async () => {
         await DataUtils.savePostStudyQuestions(id, answers);
-        router.push(`/thanks`);
+        router.push(`https://app.prolific.com/submissions/complete?cc=CRLIXHZ8`);
     };
 
 
