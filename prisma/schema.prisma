@@ -3,8 +3,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./db.sqlite3"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl is optional - only needed if you want to run migrations directly
+  // directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Participant {
